@@ -862,7 +862,7 @@ mongoose.connect(MONGODB_URI)
   const PORT = process.env.PORT || 5000;
   app.listen(PORT, () => {
     console.log(`\n╔════════════════════════════════════════╗`);
-    console.log(`║     🚀 NEXAFLOW AI SERVER READY 🚀    ║`);
+    console.log(`║     🚀 SMART TALK AI SERVER READY 🚀    ║`);
     console.log(`╚════════════════════════════════════════╝`);
     console.log(`\n📡 Port: ${PORT}`);
     console.log(`🤖 Multi-Provider AI: ACTIVE (Gemini First)`);
