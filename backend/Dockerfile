@@ -1,19 +1,18 @@
-FROM node:18-bullseye-slim
+# Use Node.js LTS image
+FROM node:18
 
-# Create app directory
-WORKDIR /usr/src/app
+# Set working directory
+WORKDIR /app
 
-# Install dependencies (use package-lock if present)
+# Copy package files and install dependencies
 COPY package*.json ./
+RUN npm install
 
-# Prefer npm ci for reproducible installs in CI/CD
-RUN npm ci --only=production
-
-# Copy source
+# Copy all source code
 COPY . .
 
-# Expose port used by the app
-EXPOSE 5000
+# Expose port
+EXPOSE 5001
 
 # Start the server
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
