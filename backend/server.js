@@ -13,8 +13,29 @@ const app = express();
 
 // Middleware
 app.use(helmet());
+
+// Configure CORS origins via environment variable for production deployments.
+// Set FRONTEND_ORIGINS to a comma-separated list like:
+// FRONTEND_ORIGINS="https://your-site.netlify.app,https://app.example.com"
+const allowedOrigins = (process.env.FRONTEND_ORIGINS || 'http://localhost:3000,http://localhost:3001')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
+
+console.log('🔐 Allowed frontend origins for CORS:', allowedOrigins);
+
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: function(origin, callback) {
+    // Allow non-browser requests like curl/postman (no origin)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf('*') !== -1 || allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+
+    // Otherwise block the origin
+    return callback(new Error('CORS policy: Origin not allowed'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
