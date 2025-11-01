@@ -573,14 +573,14 @@ export default function NexaFlowAI() {
                   />
                 </div>
 
-                {authMode === 'signup' && (
+                {/* {authMode === 'signup' && (
                   <div className={`flex items-start gap-2 p-3 rounded-lg ${darkMode ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50 border-blue-200'} border text-sm`}>
                     <CheckCircle className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
                     <p className={darkMode ? 'text-blue-200' : 'text-blue-800'}>
                       We'll send a verification email to confirm your account.
                     </p>
                   </div>
-                )}
+                )} */}
 
                 <button
                   onClick={handleAuth}
