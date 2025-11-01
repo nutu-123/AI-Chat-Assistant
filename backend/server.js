@@ -8,6 +8,8 @@ const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 require('dotenv').config();
+const fetch = require('node-fetch');
+
 
 const app = express();
 
