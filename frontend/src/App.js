@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Plus, Menu, Settings, Download, Trash2, User, Lock, Mail, Sparkles, MessageSquare, Edit2, Check, X, Sun, Moon, LogOut, Zap, Phone, Globe, CheckCircle, Brain, Cpu, ChevronRight } from 'lucide-react';
+import { Send, Plus, Menu, Settings, Download, Trash2, User, Lock, Mail, Sparkles, MessageSquare, Edit2, Check, X, Sun, Moon, LogOut, Phone, Globe, CheckCircle, Brain, Cpu, ChevronRight, Square } from 'lucide-react';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -27,7 +27,7 @@ export default function NexaFlowAI() {
     country: '' 
   });
   const [suggestedPrompts, setSuggestedPrompts] = useState([]);
-  const [verificationSent, setVerificationSent] = useState(false);
+  const abortControllerRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -106,8 +106,10 @@ export default function NexaFlowAI() {
       setMessages([]);
       loadChatSessions();
       loadSuggestedPrompts();
+      return data.sessionId;
     } catch (error) {
       console.error('Failed to create session:', error);
+      return null;
     }
   };
 
@@ -178,12 +180,14 @@ export default function NexaFlowAI() {
         setUser(data.user);
         setIsAuthenticated(true);
         
-        if (authMode === 'signup') {
-          setVerificationSent(true);
-          alert(data.message || 'Account created! Please check your email to verify.');
+        if (authMode === 'signup' && data.message) {
+          alert(data.message);
         }
         
-        await createNewChat();
+        const sessionId = await createNewChat();
+        if (sessionId) {
+          setCurrentSessionId(sessionId);
+        }
         loadChatSessions();
       } else {
         alert(data.message || 'Authentication failed');
@@ -193,13 +197,42 @@ export default function NexaFlowAI() {
     }
   };
 
+  const stopGeneration = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    
+    if (streamingMessage) {
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: streamingMessage + ' [Stopped by user]', 
+        timestamp: new Date()
+      }]);
+    }
+    
+    setStreamingMessage('');
+    setIsLoading(false);
+  };
+
   const handleSendMessage = async () => {
     if (!input.trim() || isLoading) return;
 
-    if (!currentSessionId) {
-      await createNewChat();
+    // CRITICAL FIX: Ensure session exists BEFORE sending
+    let sessionId = currentSessionId;
+    if (!sessionId) {
+      console.log('No session ID, creating new session...');
+      sessionId = await createNewChat();
+      if (!sessionId) {
+        alert('Failed to create chat session. Please try again.');
+        return;
+      }
+      setCurrentSessionId(sessionId);
+      // IMPORTANT: Wait for session to be fully created
       await new Promise(resolve => setTimeout(resolve, 500));
     }
+
+    console.log('Sending message with session ID:', sessionId);
 
     const userMessage = { role: 'user', content: input, timestamp: new Date() };
     setMessages(prev => [...prev, userMessage]);
@@ -207,6 +240,9 @@ export default function NexaFlowAI() {
     setInput('');
     setIsLoading(true);
     setStreamingMessage('');
+
+    // Create abort controller for stop functionality
+    abortControllerRef.current = new AbortController();
 
     try {
       const token = localStorage.getItem('token');
@@ -219,8 +255,9 @@ export default function NexaFlowAI() {
         },
         body: JSON.stringify({
           message: currentInput,
-          sessionId: currentSessionId
-        })
+          sessionId: sessionId  // Using the confirmed session ID
+        }),
+        signal: abortControllerRef.current.signal
       });
 
       if (!response.ok) {
@@ -264,14 +301,20 @@ export default function NexaFlowAI() {
       loadChatSessions();
 
     } catch (error) {
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: '⚠️ Error connecting to AI. Our fallback system will try again.', 
-        timestamp: new Date(),
-        isError: true
-      }]);
+      if (error.name === 'AbortError') {
+        console.log('Generation stopped by user');
+      } else {
+        console.error('Chat error:', error);
+        setMessages(prev => [...prev, { 
+          role: 'assistant', 
+          content: '⚠️ Error connecting to AI. Please try again.', 
+          timestamp: new Date(),
+          isError: true
+        }]);
+      }
     } finally {
       setIsLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -319,16 +362,30 @@ export default function NexaFlowAI() {
     }
   };
 
+  // FIXED: Accurate date calculation
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const chatDate = new Date(dateString);
+    const today = new Date();
     
-    if (diffDays === 1) return 'Today';
-    if (diffDays === 2) return 'Yesterday';
+    // Normalize to midnight for accurate comparison
+    const chatDay = new Date(chatDate.getFullYear(), chatDate.getMonth(), chatDate.getDate());
+    const todayDay = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    
+    // Calculate difference in milliseconds
+    const diffMs = todayDay - chatDay;
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
     if (diffDays <= 7) return `${diffDays} days ago`;
-    return date.toLocaleDateString();
+    if (diffDays <= 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    
+    // For older dates, show formatted date
+    const options = { month: 'short', day: 'numeric' };
+    if (chatDate.getFullYear() !== today.getFullYear()) {
+      options.year = 'numeric';
+    }
+    return chatDate.toLocaleDateString('en-US', options);
   };
 
   if (!isAuthenticated) {
@@ -375,7 +432,7 @@ export default function NexaFlowAI() {
                     <circle cx="160" cy="200" r="8" fill="white"/>
                   </g>
                   
-                  <text x="200" y="340" textAnchor="middle" fill={darkMode ? 'white' : '#1f2937'} fontSize="32" fontWeight="bold">Smart Talk AI</text>
+                  <text x="200" y="340" textAnchor="middle" fill={darkMode ? 'white' : '#1f2937'} fontSize="32" fontWeight="bold">Smart Talk</text>
                   <text x="200" y="365" textAnchor="middle" fill={darkMode ? '#a78bfa' : '#8b5cf6'} fontSize="14">AI Intelligence Platform</text>
                 </svg>
               </div>
@@ -400,7 +457,7 @@ export default function NexaFlowAI() {
                     <span>Powered by Gemini, OpenAI, and Cohere - seamlessly switching to ensure you always get the best response.</span>
                   </p>
                   <p className="flex items-start gap-3">
-                    <Zap className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-1" />
+                    <ChevronRight className="w-6 h-6 text-yellow-500 flex-shrink-0 mt-1" />
                     <span>Lightning-fast streaming responses, smart context retention, and unlimited conversations - completely free.</span>
                   </p>
                 </div>
@@ -447,7 +504,7 @@ export default function NexaFlowAI() {
                         : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
-                  Sign Up
+                  Sign Up for Free
                 </button>
               </div>
 
@@ -857,23 +914,29 @@ export default function NexaFlowAI() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Ask NexaFlow AI anything..."
+                placeholder="Ask Smart Talk AI anything..."
                 disabled={isLoading}
                 rows={1}
                 className={`flex-1 bg-transparent border-none focus:outline-none resize-none ${darkMode ? 'text-white placeholder-gray-500' : 'text-gray-900 placeholder-gray-400'} disabled:opacity-50`}
                 style={{ minHeight: '24px', maxHeight: '200px' }}
               />
-              <button
-                onClick={handleSendMessage}
-                disabled={isLoading || !input.trim()}
-                className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl transition-all hover:scale-105 flex-shrink-0"
-              >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                ) : (
+              {isLoading ? (
+                <button
+                  onClick={stopGeneration}
+                  className="w-12 h-12 rounded-xl bg-red-500 hover:bg-red-600 flex items-center justify-center transition-all hover:scale-105 flex-shrink-0"
+                  title="Stop generation"
+                >
+                  <Square className="w-5 h-5 text-white fill-white" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!input.trim()}
+                  className="w-12 h-12 rounded-xl bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl transition-all hover:scale-105 flex-shrink-0"
+                >
                   <Send className="w-5 h-5 text-white" />
-                )}
-              </button>
+                </button>
+              )}
             </div>
             <p className={`text-xs text-center mt-3 ${darkMode ? 'text-gray-500' : 'text-gray-600'}`}>
               Smart Talk AI uses multiple providers for best results. Always verify important information.
