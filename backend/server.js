@@ -5,7 +5,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const nodemailer = require('nodemailer');
+// const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 require('dotenv').config();
 const fetch = require('node-fetch');
@@ -389,182 +389,182 @@ app.get('/api/test-ai', async (req, res) => {
 });
 
 // Auth Routes
-app.post('/api/auth/signup', async (req, res) => {
-  try {
-    const { name, email, password, phone, country } = req.body;
+// app.post('/api/auth/signup', async (req, res) => {
+//   try {
+//     const { name, email, password, phone, country } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: 'Name, email and password are required' });
-    }
+//     if (!name || !email || !password) {
+//       return res.status(400).json({ message: 'Name, email and password are required' });
+//     }
 
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
+//     // const existingUser = await User.findOne({ email });
+//     // if (existingUser) {
+//     //   return res.status(400).json({ message: 'User already exists' });
+//     // }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const verificationToken = crypto.randomBytes(32).toString('hex');
+//     const hashedPassword = await bcrypt.hash(password, 10);
+//     const verificationToken = crypto.randomBytes(32).toString('hex');
     
-    const user = new User({ 
-      name, 
-      email, 
-      password: hashedPassword,
-      phone,
-      country,
-      verificationToken
-    });
-    await user.save();
+//     const user = new User({ 
+//       name, 
+//       email, 
+//       password: hashedPassword,
+//       phone,
+//       country,
+//       verificationToken
+//     });
+//     await user.save();
 
-    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+//     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
-    // Send verification email - IMPROVED
-    if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-      const verificationUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;
+//     // Send verification email - IMPROVED
+//     if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+//       const verificationUrl = `http://localhost:5000/api/auth/verify-email/${verificationToken}`;
       
-      try {
-        const mailOptions = {
-          from: {
-            name: 'Smart Talk AI',
-            address: process.env.EMAIL_USER
-          },
-          to: email,
-          subject: '🚀 Verify Your Smart Talk AI Account',
-          html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            </head>
-            <body style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
-              <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-                <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center;">
-                  <h1 style="color: white; margin: 0; font-size: 28px;">🚀 Welcome to NexaFlow AI!</h1>
-                </div>
+//       try {
+//         const mailOptions = {
+//           from: {
+//             name: 'Smart Talk AI',
+//             address: process.env.EMAIL_USER
+//           },
+//           to: email,
+//           subject: '🚀 Verify Your Smart Talk AI Account',
+//           html: `
+//             <!DOCTYPE html>
+//             <html>
+//             <head>
+//               <meta charset="UTF-8">
+//               <meta name="viewport" content="width=device-width, initial-scale=1.0">
+//             </head>
+//             <body style="margin: 0; padding: 0; font-family: Arial, sans-serif;">
+//               <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+//                 <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px; text-align: center;">
+//                   <h1 style="color: white; margin: 0; font-size: 28px;">🚀 Welcome to NexaFlow AI!</h1>
+//                 </div>
                 
-                <div style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                  <h2 style="color: #667eea; margin-top: 0;">Hello ${name}! 👋</h2>
+//                 <div style="background: white; padding: 30px; border-radius: 10px; margin-top: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+//                   <h2 style="color: #667eea; margin-top: 0;">Hello ${name}! 👋</h2>
                   
-                  <p style="color: #333; font-size: 16px; line-height: 1.6;">
-                    Thank you for joining <strong>Smart Talk AI</strong> - your next-generation AI intelligence platform!
-                  </p>
+//                   <p style="color: #333; font-size: 16px; line-height: 1.6;">
+//                     Thank you for joining <strong>Smart Talk AI</strong> - your next-generation AI intelligence platform!
+//                   </p>
                   
-                  <p style="color: #333; font-size: 16px; line-height: 1.6;">
-                    Please verify your email address by clicking the button below:
-                  </p>
+//                   <p style="color: #333; font-size: 16px; line-height: 1.6;">
+//                     Please verify your email address by clicking the button below:
+//                   </p>
                   
-                  <div style="text-align: center; margin: 30px 0;">
-                    <a href="${verificationUrl}" style="display: inline-block; padding: 15px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
-                      ✅ Verify Email Address
-                    </a>
-                  </div>
+//                   <div style="text-align: center; margin: 30px 0;">
+//                     <a href="${verificationUrl}" style="display: inline-block; padding: 15px 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
+//                       ✅ Verify Email Address
+//                     </a>
+//                   </div>
                   
-                  <p style="color: #666; font-size: 14px; line-height: 1.6;">
-                    Or copy and paste this link in your browser:
-                  </p>
-                  <p style="color: #667eea; font-size: 13px; word-break: break-all;">
-                    ${verificationUrl}
-                  </p>
+//                   <p style="color: #666; font-size: 14px; line-height: 1.6;">
+//                     Or copy and paste this link in your browser:
+//                   </p>
+//                   <p style="color: #667eea; font-size: 13px; word-break: break-all;">
+//                     ${verificationUrl}
+//                   </p>
                   
-                  <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
-                    <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
-                      This link expires in 24 hours for security reasons.
-                    </p>
-                  </div>
-                </div>
+//                   <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+//                     <p style="color: #999; font-size: 12px; text-align: center; margin: 0;">
+//                       This link expires in 24 hours for security reasons.
+//                     </p>
+//                   </div>
+//                 </div>
                 
-                <div style="text-align: center; margin-top: 20px;">
-                  <p style="color: #999; font-size: 12px;">
-                    © 2025 Smart Talk AI. All rights reserved.<br>
-                    Developed with ❤️ by Nutan Phadtare
-                  </p>
-                </div>
-              </div>
-            </body>
-            </html>
-          `
-        };
+//                 <div style="text-align: center; margin-top: 20px;">
+//                   <p style="color: #999; font-size: 12px;">
+//                     © 2025 Smart Talk AI. All rights reserved.<br>
+//                     Developed with ❤️ by Nutan Phadtare
+//                   </p>
+//                 </div>
+//               </div>
+//             </body>
+//             </html>
+//           `
+//         };
 
-        await transporter.sendMail(mailOptions);
-        console.log('✅ Verification email sent to:', email);
-      } catch (emailError) {
-        console.error('❌ Email send error:', emailError.message);
-        console.error('   Make sure you are using Gmail App Password, not regular password!');
-      }
-    } else {
-      console.log('⚠️  Email not configured - skipping verification email');
-    }
+//         await transporter.sendMail(mailOptions);
+//         console.log('✅ Verification email sent to:', email);
+//       } catch (emailError) {
+//         console.error('❌ Email send error:', emailError.message);
+//         console.error('   Make sure you are using Gmail App Password, not regular password!');
+//       }
+//     } else {
+//       console.log('⚠️  Email not configured - skipping verification email');
+//     }
 
-    res.status(201).json({
-      token,
-      user: { 
-        id: user._id, 
-        name: user.name, 
-        email: user.email,
-        isVerified: user.isVerified 
-      },
-      message: 'Signup successful! Please check your email to verify your account.'
-    });
-  } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+//     res.status(201).json({
+//       token,
+//       user: { 
+//         id: user._id, 
+//         name: user.name, 
+//         email: user.email,
+//         isVerified: user.isVerified 
+//       },
+//       message: 'Signup successful! Please check your email to verify your account.'
+//     });
+//   } catch (error) {
+//     console.error('Signup error:', error);
+//     res.status(500).json({ message: 'Server error' });
+//   }
+// });
 
-app.get('/api/auth/verify-email/:token', async (req, res) => {
-  try {
-    const { token } = req.params;
+// app.get('/api/auth/verify-email/:token', async (req, res) => {
+//   try {
+//     const { token } = req.params;
     
-    const user = await User.findOne({ verificationToken: token });
+//     const user = await User.findOne({ verificationToken: token });
     
-    if (!user) {
-      return res.status(400).send(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Verification Failed</title>
-        </head>
-        <body style="font-family: Arial; text-align: center; padding: 50px; background: #f5f5f5;">
-          <div style="background: white; padding: 40px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <h2 style="color: #e74c3c;">❌ Invalid or Expired Token</h2>
-            <p style="color: #666;">This verification link is invalid or has expired.</p>
-            <p style="color: #666;">Please request a new verification email.</p>
-          </div>
-        </body>
-        </html>
-      `);
-    }
+//     if (!user) {
+//       return res.status(400).send(`
+//         <!DOCTYPE html>
+//         <html>
+//         <head>
+//           <meta charset="UTF-8">
+//           <title>Verification Failed</title>
+//         </head>
+//         <body style="font-family: Arial; text-align: center; padding: 50px; background: #f5f5f5;">
+//           <div style="background: white; padding: 40px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+//             <h2 style="color: #e74c3c;">❌ Invalid or Expired Token</h2>
+//             <p style="color: #666;">This verification link is invalid or has expired.</p>
+//             <p style="color: #666;">Please request a new verification email.</p>
+//           </div>
+//         </body>
+//         </html>
+//       `);
+//     }
 
-    user.isVerified = true;
-    user.verificationToken = undefined;
-    await user.save();
+//     user.isVerified = true;
+//     user.verificationToken = undefined;
+//     await user.save();
 
-    res.send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Email Verified</title>
-      </head>
-      <body style="font-family: Arial; text-align: center; padding: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-        <div style="background: white; padding: 40px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
-          <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
-          <h2 style="color: #27ae60; margin-top: 0;">Email Verified Successfully!</h2>
-          <p style="color: #333; font-size: 18px;">Your Smart Talk AI account is now active.</p>
-          <p style="color: #666;">You can close this window and return to the app.</p>
-          <a href="http://localhost:3000" style="display: inline-block; margin-top: 20px; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
-            Go to Smart Talk AI
-          </a>
-        </div>
-      </body>
-      </html>
-    `);
-  } catch (error) {
-    console.error('Verification error:', error);
-    res.status(500).send('Verification failed');
-  }
-});
+//     res.send(`
+//       <!DOCTYPE html>
+//       <html>
+//       <head>
+//         <meta charset="UTF-8">
+//         <title>Email Verified</title>
+//       </head>
+//       <body style="font-family: Arial; text-align: center; padding: 50px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+//         <div style="background: white; padding: 40px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
+//           <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
+//           <h2 style="color: #27ae60; margin-top: 0;">Email Verified Successfully!</h2>
+//           <p style="color: #333; font-size: 18px;">Your Smart Talk AI account is now active.</p>
+//           <p style="color: #666;">You can close this window and return to the app.</p>
+//           <a href="http://localhost:3000" style="display: inline-block; margin-top: 20px; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
+//             Go to Smart Talk AI
+//           </a>
+//         </div>
+//       </body>
+//       </html>
+//     `);
+//   } catch (error) {
+//     console.error('Verification error:', error);
+//     res.status(500).send('Verification failed');
+//   }
+// });
 
 app.post('/api/auth/signin', async (req, res) => {
   try {
