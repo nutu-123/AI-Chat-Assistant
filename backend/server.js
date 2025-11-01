@@ -13,29 +13,8 @@ const app = express();
 
 // Middleware
 app.use(helmet());
-
-// Configure CORS origins via environment variable for production deployments.
-// Set FRONTEND_ORIGINS to a comma-separated list like:
-// FRONTEND_ORIGINS="https://your-site.netlify.app,https://app.example.com"
-const allowedOrigins = (process.env.FRONTEND_ORIGINS || 'http://localhost:3000,http://localhost:3001')
-  .split(',')
-  .map(s => s.trim())
-  .filter(Boolean);
-
-console.log('🔐 Allowed frontend origins for CORS:', allowedOrigins);
-
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow non-browser requests like curl/postman (no origin)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.indexOf('*') !== -1 || allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
-    }
-
-    // Otherwise block the origin
-    return callback(new Error('CORS policy: Origin not allowed'));
-  },
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -443,11 +422,11 @@ app.post('/api/auth/signup', async (req, res) => {
       try {
         const mailOptions = {
           from: {
-            name: 'NexaFlow AI',
+            name: 'Smart Talk AI',
             address: process.env.EMAIL_USER
           },
           to: email,
-          subject: '🚀 Verify Your NexaFlow AI Account',
+          subject: '🚀 Verify Your Smart Talk AI Account',
           html: `
             <!DOCTYPE html>
             <html>
@@ -465,7 +444,7 @@ app.post('/api/auth/signup', async (req, res) => {
                   <h2 style="color: #667eea; margin-top: 0;">Hello ${name}! 👋</h2>
                   
                   <p style="color: #333; font-size: 16px; line-height: 1.6;">
-                    Thank you for joining <strong>NexaFlow AI</strong> - your next-generation AI intelligence platform!
+                    Thank you for joining <strong>Smart Talk AI</strong> - your next-generation AI intelligence platform!
                   </p>
                   
                   <p style="color: #333; font-size: 16px; line-height: 1.6;">
@@ -494,7 +473,7 @@ app.post('/api/auth/signup', async (req, res) => {
                 
                 <div style="text-align: center; margin-top: 20px;">
                   <p style="color: #999; font-size: 12px;">
-                    © 2025 NexaFlow AI. All rights reserved.<br>
+                    © 2025 Smart Talk AI. All rights reserved.<br>
                     Developed with ❤️ by Nutan Phadtare
                   </p>
                 </div>
@@ -570,10 +549,10 @@ app.get('/api/auth/verify-email/:token', async (req, res) => {
         <div style="background: white; padding: 40px; border-radius: 10px; max-width: 500px; margin: 0 auto; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
           <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
           <h2 style="color: #27ae60; margin-top: 0;">Email Verified Successfully!</h2>
-          <p style="color: #333; font-size: 18px;">Your NexaFlow AI account is now active.</p>
+          <p style="color: #333; font-size: 18px;">Your Smart Talk AI account is now active.</p>
           <p style="color: #666;">You can close this window and return to the app.</p>
           <a href="http://localhost:3000" style="display: inline-block; margin-top: 20px; padding: 12px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold;">
-            Go to NexaFlow AI
+            Go to Smart Talk AI
           </a>
         </div>
       </body>
@@ -880,7 +859,7 @@ mongoose.connect(MONGODB_URI)
   console.log('✅ MongoDB connected successfully');
   console.log(`📦 Database: ${MONGODB_URI}`);
   
-  const PORT = process.env.PORT || 5000;
+  const PORT = process.env.PORT || 5001;
   app.listen(PORT, () => {
     console.log(`\n╔════════════════════════════════════════╗`);
     console.log(`║     🚀 SMART TALK AI SERVER READY 🚀    ║`);
