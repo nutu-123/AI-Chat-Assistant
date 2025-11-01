@@ -18,7 +18,7 @@ WORKDIR /app
 # Copy installed node modules and source from builder
 COPY --from=builder /app /app
 
-EXPOSE 5000
+EXPOSE 5001
 
 # Default command
 CMD ["node", "server.js"]
