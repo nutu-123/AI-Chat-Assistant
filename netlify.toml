@@ -1,0 +1,41 @@
+[build]
+  base = "frontend"
+  publish = "build"
+  command = "npm install && npm run build"
+  functions = "netlify/functions"
+
+[dev]
+  functions = "netlify/functions"
+  publish = "build"
+  port = 3000
+
+# Production context: all deploys from the Production branch set in your site's
+# deploy contexts will inherit these settings.
+[context.production]
+  environment = { NODE_VERSION = "18" }
+
+# Deploy Preview context: all deploys generated from a pull/merge request will
+# inherit these settings.
+[context.deploy-preview]
+  environment = { NODE_VERSION = "18" }
+
+# Specific branch context: all deploys from this specific branch will inherit
+# these settings.
+[context.main]
+  environment = { NODE_VERSION = "18" }
+
+# Handle SPA routing - redirect all paths to index.html
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Content-Security-Policy = "default-src 'self' https://api.openai.com https://generativelanguage.googleapis.com https://api.cohere.ai; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.openai.com https://generativelanguage.googleapis.com https://api.cohere.ai;"
